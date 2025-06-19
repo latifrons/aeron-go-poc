@@ -31,7 +31,7 @@ WORKDIR /app
 RUN wget -O aeron-all.jar https://repo1.maven.org/maven2/io/aeron/aeron-all/1.48.2/aeron-all-1.48.2.jar
 
 # Copy Go source code
-COPY main .
+COPY --from=builder /src/main .
 
 
 # Run Supervisor

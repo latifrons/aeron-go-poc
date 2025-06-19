@@ -17,39 +17,49 @@ limitations under the License.
 package main
 
 import (
-	"flag"
 	"github.com/lirm/aeron-go/aeron/logging"
-	"os"
+	"github.com/spf13/viper"
+	"log"
 )
 
 var logger = logging.MustGetLogger("basic_subscriber")
 
 func main() {
+	viper.SetEnvPrefix("INJ")
+	viper.AutomaticEnv()
+
+	for k, v := range viper.AllSettings() {
+		log.Printf("Settings: %v = %v\n", k, v)
+	}
+	viper.SetDefault("profiler", false)
+	viper.SetDefault("channel", "aeron:ipc")
+	viper.SetDefault("streamId", 10)
+	viper.SetDefault("count", 1000000)
+	viper.SetDefault("size", 256)
+	viper.SetDefault("logging", false)
+	viper.SetDefault("timeout", 10)
+	viper.SetDefault("dir", "")
 
 	c := &Config{
-		ProfilerEnabled: flag.Bool("profiler", false, "Enable profiler"),
-		Channel:         flag.String("channel", "aeron:ipc", "Channel to use for subscription"),
-		StreamId:        flag.Int("streamId", 10, "Stream ID"),
-		Messages:        flag.Int("count", 1000000, "Number of messages to send"),
-		Size:            flag.Int("size", 256, "messages size"),
-		LoggingOn:       flag.Bool("logging", false, "Enable logging"),
-		Timeout:         flag.Int("timeout", 10, "Timeout in seconds"),
-		AeronDir:        flag.String("dir", "", "Aeron directory (default: empty, uses default aeron dir)"),
+		ProfilerEnabled: viper.GetBool("profiler"),
+		Channel:         viper.GetString("channel"),
+		StreamId:        viper.GetInt("streamId"),
+		Messages:        viper.GetInt("count"),
+		Size:            viper.GetInt("size"),
+		LoggingOn:       viper.GetBool("logging"),
+		Timeout:         viper.GetInt("timeout"),
+		AeronDir:        viper.GetString("dir"),
 	}
+	cmd := viper.GetString("command")
 
-	cmd := os.Args[1]
-	os.Args = os.Args[1:]
-
-	flag.Parse()
-
-	if !*c.LoggingOn {
-		logging.SetLevel(logging.INFO, "aeron")
-		logging.SetLevel(logging.INFO, "memmap")
-		logging.SetLevel(logging.DEBUG, "driver")
-		logging.SetLevel(logging.INFO, "counters")
-		logging.SetLevel(logging.INFO, "logbuffers")
-		logging.SetLevel(logging.INFO, "buffer")
-	}
+	//if !*c.LoggingOn {
+	//	logging.SetLevel(logging.INFO, "aeron")
+	//	logging.SetLevel(logging.INFO, "memmap")
+	//	logging.SetLevel(logging.DEBUG, "driver")
+	//	logging.SetLevel(logging.INFO, "counters")
+	//	logging.SetLevel(logging.INFO, "logbuffers")
+	//	logging.SetLevel(logging.INFO, "buffer")
+	//}
 
 	// use the first arg to select func
 	switch cmd {
