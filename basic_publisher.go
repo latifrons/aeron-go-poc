@@ -32,7 +32,8 @@ func basicPublisher(c *Config) {
 	counter := 0
 
 	for i := 0; i < c.Messages; i++ {
-		message := fmt.Sprintf("this is a message %s", time.Now().String())
+		message := fmt.Sprintf("%d", time.Now().UnixNano())
+
 		srcBuffer := atomic.MakeBuffer(([]byte)(message))
 
 		for {

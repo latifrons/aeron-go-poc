@@ -7,6 +7,7 @@ import (
 	"github.com/lirm/aeron-go/aeron/idlestrategy"
 	"github.com/lirm/aeron-go/aeron/logbuffer"
 	"log"
+	"strconv"
 	"time"
 )
 
@@ -36,7 +37,15 @@ func basicSubscriber(c *Config) {
 	startTime := time.Now()
 
 	handler := func(buffer *atomic.Buffer, offset int32, length int32, header *logbuffer.Header) {
-		fmt.Printf("%8.d: Gots me a fragment offset:%d length: %d payload: %s\n", counter, offset, length, string(buffer.GetBytesArray(offset, length)))
+		s := string(buffer.GetBytesArray(offset, length))
+		nano, err := strconv.ParseInt(s, 10, 64)
+		if err != nil {
+			log.Printf("Error parsing fragment payload: %s", err)
+			return
+		}
+		tNow := time.Now().UnixNano()
+
+		fmt.Printf("%8.d: Frag offset=%d length=%d delay=%d ns payload: %s\n", counter, offset, length, tNow-nano, s)
 
 		//fmt.Println(v)
 		//bytes := buffer.GetBytesArray(offset, length)
