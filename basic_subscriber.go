@@ -1,0 +1,71 @@
+package main
+
+import (
+	"fmt"
+	"github.com/lirm/aeron-go/aeron"
+	"github.com/lirm/aeron-go/aeron/atomic"
+	"github.com/lirm/aeron-go/aeron/idlestrategy"
+	"github.com/lirm/aeron-go/aeron/logbuffer"
+	"log"
+	"time"
+)
+
+func basicSubscriber(c *Config) {
+
+	to := time.Second * (time.Duration(*c.Timeout))
+	ctx := aeron.NewContext().MediaDriverTimeout(to).AeronDir(*c.AeronDir)
+
+	a, err := aeron.Connect(ctx)
+	if err != nil {
+		logger.Fatalf("Failed to connect to media driver: %s\n", err.Error())
+	}
+	defer a.Close()
+
+	log.Printf("Connected Cnc File: %s\n", ctx.CncFileName())
+
+	//subscription, err := a.AddSubscription("aeron:ipc", 10)
+	subscription, err := a.AddSubscription(*c.Channel, int32(*c.StreamId))
+	if err != nil {
+		logger.Fatal(err)
+	}
+	defer subscription.Close()
+	log.Printf("Subscription found %v", subscription)
+
+	counter := 0
+
+	startTime := time.Now()
+
+	handler := func(buffer *atomic.Buffer, offset int32, length int32, header *logbuffer.Header) {
+		fmt.Printf("%8.d: Gots me a fragment offset:%d length: %d payload: %s\n", counter, offset, length, string(buffer.GetBytesArray(offset, length)))
+
+		//fmt.Println(v)
+		//bytes := buffer.GetBytesArray(offset, length)
+		//tmpBuf.Reset()
+		//buffer.WriteBytes(tmpBuf, offset, length)
+		//fmt.Printf("%8.d: Gots me a fragment offset:%d length: %d payload: %s (buf:%s)\n", counter, offset, length, string(bytes), string(tmpBuf.Next(int(length))))
+		counter++
+
+		if counter == 1 {
+			startTime = time.Now()
+		}
+		if counter%1000 == 0 {
+			elapsed := time.Since(startTime)
+			log.Printf("Received %d fragments in %s, TPS: %.2f\n", counter, elapsed, float64(counter)/elapsed.Seconds())
+		}
+
+		if counter == 1000000 {
+			elapsed := time.Since(startTime)
+			log.Printf("End %d fragments in %s, TPS: %.2f\n", counter, elapsed, float64(counter)/elapsed.Seconds())
+			counter = 0
+		}
+	}
+
+	//idleStrategy := idlestrategy.Sleeping{SleepFor: time.Millisecond}
+	//idleStrategy := idlestrategy.Busy{}
+
+	idle := idlestrategy.NewDefaultBackoffIdleStrategy()
+	for {
+		fragmentsRead := subscription.Poll(handler, 1000)
+		idle.Idle(fragmentsRead)
+	}
+}
