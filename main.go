@@ -38,7 +38,7 @@ func main() {
 	viper.SetDefault("size", 256)
 	viper.SetDefault("logging", false)
 	viper.SetDefault("timeout", 10)
-	viper.SetDefault("dir", "")
+	viper.SetDefault("dir", "/dev/shm")
 
 	c := &Config{
 		ProfilerEnabled: viper.GetBool("profiler"),
