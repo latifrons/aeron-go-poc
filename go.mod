@@ -2,7 +2,10 @@ module aeron-go-poc
 
 go 1.24
 
-require github.com/lirm/aeron-go v0.0.0-20240606170339-8b05ad14e456
+require (
+	github.com/lirm/aeron-go v0.0.0-20240606170339-8b05ad14e456
+	github.com/spf13/viper v1.20.1
+)
 
 require (
 	github.com/davecgh/go-spew v1.1.1 // indirect
@@ -16,7 +19,6 @@ require (
 	github.com/spf13/afero v1.12.0 // indirect
 	github.com/spf13/cast v1.7.1 // indirect
 	github.com/spf13/pflag v1.0.6 // indirect
-	github.com/spf13/viper v1.20.1 // indirect
 	github.com/stretchr/objx v0.5.2 // indirect
 	github.com/stretchr/testify v1.10.0 // indirect
 	github.com/subosito/gotenv v1.6.0 // indirect
