@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"github.com/lirm/aeron-go/aeron"
 	"github.com/lirm/aeron-go/aeron/atomic"
-	"github.com/lirm/aeron-go/aeron/idlestrategy"
 	"github.com/lirm/aeron-go/aeron/logbuffer"
 	"log"
 	"strconv"
@@ -12,9 +11,8 @@ import (
 )
 
 func basicSubscriber(c *Config) {
-
 	to := time.Second * (time.Duration(c.Timeout))
-	ctx := aeron.NewContext().MediaDriverTimeout(to).AeronDir(c.AeronDir)
+	ctx := aeron.NewContext().MediaDriverTimeout(to).AeronDir(c.AeronDir).IdleStrategy(ToIdleStrategy(c.Idle))
 
 	a, err := aeron.Connect(ctx)
 	if err != nil {
@@ -72,7 +70,7 @@ func basicSubscriber(c *Config) {
 	//idleStrategy := idlestrategy.Sleeping{SleepFor: time.Millisecond}
 	//idleStrategy := idlestrategy.Busy{}
 
-	idle := idlestrategy.NewDefaultBackoffIdleStrategy()
+	idle := ToIdleStrategy(c.Idle)
 	for {
 		fragmentsRead := subscription.Poll(handler, 1000)
 		idle.Idle(fragmentsRead)

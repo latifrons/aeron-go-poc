@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"github.com/lirm/aeron-go/aeron/idlestrategy"
 	"log"
 	"time"
 
@@ -12,7 +11,7 @@ import (
 
 func basicPublisher(c *Config) {
 	to := time.Second * (time.Duration(c.Timeout))
-	ctx := aeron.NewContext().MediaDriverTimeout(to).AeronDir(c.AeronDir)
+	ctx := aeron.NewContext().MediaDriverTimeout(to).AeronDir(c.AeronDir).IdleStrategy(ToIdleStrategy(c.Idle))
 	a, err := aeron.Connect(ctx)
 	if err != nil {
 		log.Fatalf("Failed to connect to media driver: %s\n", err.Error())
@@ -28,7 +27,7 @@ func basicPublisher(c *Config) {
 	defer pub.Close()
 	log.Printf("Publication created %v", pub)
 
-	idle := idlestrategy.NewDefaultBackoffIdleStrategy()
+	idle := ToIdleStrategy(c.Idle)
 	counter := 0
 
 	for i := 0; i < c.Messages; i++ {

@@ -39,6 +39,7 @@ func main() {
 	viper.SetDefault("logging", false)
 	viper.SetDefault("timeout", 10)
 	viper.SetDefault("dir", "/dev/shm/aeron")
+	viper.SetDefault("idle", "")
 
 	c := &Config{
 		ProfilerEnabled: viper.GetBool("profiler"),
@@ -49,6 +50,7 @@ func main() {
 		LoggingOn:       viper.GetBool("logging"),
 		Timeout:         viper.GetInt("timeout"),
 		AeronDir:        viper.GetString("dir"),
+		Idle:            viper.GetString("idle"),
 	}
 	cmd := viper.GetString("command")
 
