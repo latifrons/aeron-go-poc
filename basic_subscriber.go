@@ -43,7 +43,7 @@ func basicSubscriber(c *Config) {
 		}
 		tNow := time.Now().UnixNano()
 
-		fmt.Printf("%8.d: Frag offset=%d length=%d delay=%d ns payload: %s\n", counter, offset, length, tNow-nano, s)
+		fmt.Printf("%8.d: Frag offset=%d length=%d delay=%d ns %d us payload: %s\n", counter, offset, length, tNow-nano, (tNow-nano)/1000, s)
 
 		//fmt.Println(v)
 		//bytes := buffer.GetBytesArray(offset, length)

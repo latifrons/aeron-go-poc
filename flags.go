@@ -27,6 +27,11 @@ func mustAtoI(s string) int64 {
 	return int64(v)
 }
 
+// backoffp,10,20,1000,1000000
+// backoff
+// busyspin
+// sleeping,1000
+// yield
 func ToIdleStrategy(idle string) idlestrategy.Idler {
 	vs := strings.Split(idle, ",")
 	switch vs[0] {
