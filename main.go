@@ -52,7 +52,7 @@ func main() {
 	}
 	cmd := viper.GetString("command")
 
-	//if !*c.LoggingOn {
+	//if !c.LoggingOn {
 	//	logging.SetLevel(logging.INFO, "aeron")
 	//	logging.SetLevel(logging.INFO, "memmap")
 	//	logging.SetLevel(logging.DEBUG, "driver")

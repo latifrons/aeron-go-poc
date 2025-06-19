@@ -11,8 +11,8 @@ import (
 )
 
 func basicPublisher(c *Config) {
-	to := time.Second * (time.Duration(*c.Timeout))
-	ctx := aeron.NewContext().MediaDriverTimeout(to).AeronDir(*c.AeronDir)
+	to := time.Second * (time.Duration(c.Timeout))
+	ctx := aeron.NewContext().MediaDriverTimeout(to).AeronDir(c.AeronDir)
 	a, err := aeron.Connect(ctx)
 	if err != nil {
 		log.Fatalf("Failed to connect to media driver: %s\n", err.Error())
@@ -21,7 +21,7 @@ func basicPublisher(c *Config) {
 
 	log.Printf("Connected Cnc File: %s\n", ctx.CncFileName())
 
-	pub, err := a.AddPublication(*c.Channel, int32(*c.StreamId))
+	pub, err := a.AddPublication(c.Channel, int32(c.StreamId))
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -31,7 +31,7 @@ func basicPublisher(c *Config) {
 	idle := idlestrategy.NewDefaultBackoffIdleStrategy()
 	counter := 0
 
-	for i := 0; i < *c.Messages; i++ {
+	for i := 0; i < c.Messages; i++ {
 		message := fmt.Sprintf("this is a message %s", time.Now().String())
 		srcBuffer := atomic.MakeBuffer(([]byte)(message))
 
@@ -51,5 +51,5 @@ func basicPublisher(c *Config) {
 		fmt.Printf("Published %d messages: %s\n", counter, message)
 		time.Sleep(time.Second)
 	}
-	fmt.Printf("Published %d messages of size %d to channel %s stream %d\n", *c.Messages, *c.Size, *c.Channel, *c.StreamId)
+	fmt.Printf("Published %d messages of size %d to channel %s stream %d\n", c.Messages, c.Size, c.Channel, c.StreamId)
 }

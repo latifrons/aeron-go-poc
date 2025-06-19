@@ -12,8 +12,8 @@ import (
 
 func basicSubscriber(c *Config) {
 
-	to := time.Second * (time.Duration(*c.Timeout))
-	ctx := aeron.NewContext().MediaDriverTimeout(to).AeronDir(*c.AeronDir)
+	to := time.Second * (time.Duration(c.Timeout))
+	ctx := aeron.NewContext().MediaDriverTimeout(to).AeronDir(c.AeronDir)
 
 	a, err := aeron.Connect(ctx)
 	if err != nil {
@@ -24,7 +24,7 @@ func basicSubscriber(c *Config) {
 	log.Printf("Connected Cnc File: %s\n", ctx.CncFileName())
 
 	//subscription, err := a.AddSubscription("aeron:ipc", 10)
-	subscription, err := a.AddSubscription(*c.Channel, int32(*c.StreamId))
+	subscription, err := a.AddSubscription(c.Channel, int32(c.StreamId))
 	if err != nil {
 		logger.Fatal(err)
 	}
