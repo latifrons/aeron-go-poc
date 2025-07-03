@@ -32,19 +32,20 @@ func main() {
 		log.Printf("Settings: %v = %v\n", k, v)
 	}
 	viper.SetDefault("profiler", false)
-	viper.SetDefault("channel", "aeron:ipc")
+	viper.SetDefault("channel_out", "aeron:ipc")
+	viper.SetDefault("channel_in", "aeron:ipc")
 	viper.SetDefault("streamId", 10)
 	viper.SetDefault("count", 1000000)
 	viper.SetDefault("size", 256)
-	viper.SetDefault("logging", false)
+	viper.SetDefault("logging", true)
 	viper.SetDefault("timeout", 10)
-	viper.SetDefault("dir", "/dev/shm/aeron")
-	viper.SetDefault("idle", "")
+	viper.SetDefault("dir", "./aeron")
+	viper.SetDefault("idle", "backoff")
 
 	c := &Config{
 		ProfilerEnabled: viper.GetBool("profiler"),
-		Channel:         viper.GetString("channel"),
-		StreamId:        viper.GetInt("streamId"),
+		ChannelOut:      viper.GetString("channel_out"),
+		ChannelIn:       viper.GetString("channel_in"),
 		Messages:        viper.GetInt("count"),
 		Size:            viper.GetInt("size"),
 		LoggingOn:       viper.GetBool("logging"),
@@ -54,7 +55,7 @@ func main() {
 	}
 	cmd := viper.GetString("command")
 
-	//if !c.LoggingOn {
+	//if !C.LoggingOn {
 	//	logging.SetLevel(logging.INFO, "aeron")
 	//	logging.SetLevel(logging.INFO, "memmap")
 	//	logging.SetLevel(logging.DEBUG, "driver")
@@ -77,6 +78,20 @@ func main() {
 	case "clusterServerEcho":
 		clusterServerEcho(c)
 		return
+	case "echoServer":
+		c.StreamIdIn = PingStreamId
+		c.StreamIdOut = PongStreamId
+		es := EchoServer{
+			C: c,
+		}
+		es.serverEcho()
+	case "echoClient":
+		c.StreamIdIn = PongStreamId
+		c.StreamIdOut = PingStreamId
+		es := EchoClient{
+			C: c,
+		}
+		es.clientEcho()
 	default:
 		logger.Fatalf("Unknown example: %s", cmd)
 	}

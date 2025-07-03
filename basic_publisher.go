@@ -20,7 +20,7 @@ func basicPublisher(c *Config) {
 
 	log.Printf("Connected Cnc File: %s\n", ctx.CncFileName())
 
-	pub, err := a.AddPublication(c.Channel, int32(c.StreamId))
+	pub, err := a.AddPublication(c.ChannelOut, int32(c.StreamIdOut))
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -51,5 +51,5 @@ func basicPublisher(c *Config) {
 		fmt.Printf("Published %d messages: %s\n", counter, message)
 		time.Sleep(time.Second)
 	}
-	fmt.Printf("Published %d messages of size %d to channel %s stream %d\n", c.Messages, c.Size, c.Channel, c.StreamId)
+	fmt.Printf("Published %d messages of size %d to channel %s stream %d\n", c.Messages, c.Size, c.ChannelOut, c.StreamIdOut)
 }

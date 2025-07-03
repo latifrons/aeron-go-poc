@@ -9,8 +9,10 @@ import (
 
 type Config struct {
 	ProfilerEnabled bool
-	Channel         string
-	StreamId        int
+	ChannelOut      string
+	ChannelIn       string
+	StreamIdIn      int
+	StreamIdOut     int
 	Messages        int
 	Size            int
 	LoggingOn       bool

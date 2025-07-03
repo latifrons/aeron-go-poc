@@ -23,7 +23,7 @@ func basicSubscriber(c *Config) {
 	log.Printf("Connected Cnc File: %s\n", ctx.CncFileName())
 
 	//subscription, err := a.AddSubscription("aeron:ipc", 10)
-	subscription, err := a.AddSubscription(c.Channel, int32(c.StreamId))
+	subscription, err := a.AddSubscription(c.ChannelIn, int32(c.StreamIdIn))
 	if err != nil {
 		logger.Fatal(err)
 	}
@@ -45,11 +45,6 @@ func basicSubscriber(c *Config) {
 
 		fmt.Printf("%8.d: Frag offset=%d length=%d delay=%d ns %d us payload: %s\n", counter, offset, length, tNow-nano, (tNow-nano)/1000, s)
 
-		//fmt.Println(v)
-		//bytes := buffer.GetBytesArray(offset, length)
-		//tmpBuf.Reset()
-		//buffer.WriteBytes(tmpBuf, offset, length)
-		//fmt.Printf("%8.d: Gots me a fragment offset:%d length: %d payload: %s (buf:%s)\n", counter, offset, length, string(bytes), string(tmpBuf.Next(int(length))))
 		counter++
 
 		if counter == 1 {
