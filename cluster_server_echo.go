@@ -2,22 +2,23 @@ package main
 
 import (
 	"fmt"
-	"os"
+	"strconv"
+	"strings"
 
 	"github.com/lirm/aeron-go/aeron"
 	"github.com/lirm/aeron-go/aeron/atomic"
-	"github.com/lirm/aeron-go/aeron/idlestrategy"
 	"github.com/lirm/aeron-go/aeron/logbuffer"
 	"github.com/lirm/aeron-go/cluster"
 	"github.com/lirm/aeron-go/cluster/codecs"
 )
 
-type EchoService struct {
-	cluster      cluster.Cluster
+type ClusterServerEcho struct {
+	cluster cluster.Cluster
+
 	messageCount int32
 }
 
-func (s *EchoService) OnStart(cluster cluster.Cluster, image aeron.Image) {
+func (s *ClusterServerEcho) OnStart(cluster cluster.Cluster, image aeron.Image) {
 	s.cluster = cluster
 	if image == nil {
 		fmt.Printf("OnStart with no image\n")
@@ -34,11 +35,11 @@ func (s *EchoService) OnStart(cluster cluster.Cluster, image aeron.Image) {
 	}
 }
 
-func (s *EchoService) OnSessionOpen(session cluster.ClientSession, timestamp int64) {
+func (s *ClusterServerEcho) OnSessionOpen(session cluster.ClientSession, timestamp int64) {
 	fmt.Printf("OnSessionOpen - sessionId=%d timestamp=%v\n", session.Id(), timestamp)
 }
 
-func (s *EchoService) OnSessionClose(
+func (s *ClusterServerEcho) OnSessionClose(
 	session cluster.ClientSession,
 	timestamp int64,
 	reason codecs.CloseReasonEnum,
@@ -46,7 +47,7 @@ func (s *EchoService) OnSessionClose(
 	fmt.Printf("OnSessionClose - sessionId=%d timestamp=%v reason=%v\n", session.Id(), timestamp, reason)
 }
 
-func (s *EchoService) OnSessionMessage(
+func (s *ClusterServerEcho) OnSessionMessage(
 	session cluster.ClientSession,
 	timestamp int64,
 	buffer *atomic.Buffer,
@@ -55,24 +56,34 @@ func (s *EchoService) OnSessionMessage(
 	header *logbuffer.Header,
 ) {
 	s.messageCount++
-	for offerCnt := 1; ; offerCnt++ {
-		result := session.Offer(buffer, offset, length, nil)
-		if result >= 0 {
-			return
-		} else if result == aeron.BackPressured || result == aeron.AdminAction {
-			s.cluster.IdleStrategy().Idle(0)
-		} else {
-			fmt.Printf("WARNING: OnSessionMessage offer failed - sessionId=%d time=%d pos=%d len=%d offerCnt=%d result=%v\n",
-				session.Id(), timestamp, header.Position(), length, offerCnt, result)
-		}
-	}
+	// Read the incoming timestamp from the message
+	clientTimestamp := string(buffer.GetBytesArray(offset, length))
+
+	srcBuffer := atomic.MakeBuffer(([]byte)(clientTimestamp))
+
+	session.Offer(srcBuffer, 0, length, nil)
+	fmt.Printf("OnSessionMessage - sessionId=%d time=%d pos=%d len=%d messageCount=%d clientTimestamp=%s\n",
+		session.Id(), timestamp, header.Position(), length, s.messageCount, clientTimestamp)
+
+	//
+	//for offerCnt := 1; ; offerCnt++ {
+	//	result := session.Offer(buffer, offset, length, nil)
+	//	if result >= 0 {
+	//		return
+	//	} else if result == aeron.BackPressured || result == aeron.AdminAction {
+	//		s.cluster.IdleStrategy().Idle(0)
+	//	} else {
+	//		fmt.Printf("WARNING: OnSessionMessage offer failed - sessionId=%d time=%d pos=%d len=%d offerCnt=%d result=%v\n",
+	//			session.Id(), timestamp, header.Position(), length, offerCnt, result)
+	//	}
+	//}
 }
 
-func (s *EchoService) OnTimerEvent(correlationId, timestamp int64) {
+func (s *ClusterServerEcho) OnTimerEvent(correlationId, timestamp int64) {
 	fmt.Printf("OnTimerEvent - correlationId=%d timestamp=%v\n", correlationId, timestamp)
 }
 
-func (s *EchoService) OnTakeSnapshot(publication *aeron.Publication) {
+func (s *ClusterServerEcho) OnTakeSnapshot(publication *aeron.Publication) {
 	fmt.Printf("OnTakeSnapshot - streamId=%d sessionId=%d messageCount=%d\n",
 		publication.StreamID(), publication.SessionID(), s.messageCount)
 	buf := atomic.MakeBuffer(make([]byte, 4))
@@ -89,15 +100,15 @@ func (s *EchoService) OnTakeSnapshot(publication *aeron.Publication) {
 	}
 }
 
-func (s *EchoService) OnRoleChange(role cluster.Role) {
+func (s *ClusterServerEcho) OnRoleChange(role cluster.Role) {
 	fmt.Printf("OnRoleChange - role=%v\n", role)
 }
 
-func (s *EchoService) OnTerminate(cluster cluster.Cluster) {
+func (s *ClusterServerEcho) OnTerminate(cluster cluster.Cluster) {
 	fmt.Printf("OnTerminate - role=%v logPos=%d\n", cluster.Role(), cluster.LogPosition())
 }
 
-func (s *EchoService) OnNewLeadershipTermEvent(
+func (s *ClusterServerEcho) OnNewLeadershipTermEvent(
 	leadershipTermId int64,
 	logPosition int64,
 	timestamp int64,
@@ -111,18 +122,17 @@ func (s *EchoService) OnNewLeadershipTermEvent(
 		leadershipTermId, logPosition, timestamp, termBaseLogPosition, leaderMemberId, logSessionId, timeUnit, appVersion)
 }
 
-func clusterServerEcho(*Config) {
-	ctx := aeron.NewContext().AeronDir("D:\\ws\\latifrons\\aeron-java-poc\\aeron-md-server")
+func clusterServerEcho(c *Config) {
+	aeronDir := strings.ReplaceAll(c.AeronDir, "<id>", strconv.Itoa(c.ClusterId))
+	ctx := aeron.NewContext().AeronDir(aeronDir)
 
 	opts := cluster.NewOptions()
 	//if idleStr := os.Getenv("NO_OP_IDLE"); idleStr != "" {
-	opts.IdleStrategy = &idlestrategy.Busy{}
-	//}
-	if opts.ClusterDir = os.Getenv("CLUSTER_DIR"); opts.ClusterDir == "" {
-		opts.ClusterDir = "D:\\ws\\latifrons\\aeron-java-poc\\aeron-cluster-0"
-	}
 
-	service := &EchoService{}
+	opts.IdleStrategy = ToIdleStrategy(c.Idle)
+	opts.ClusterDir = strings.ReplaceAll(c.ClusterDir, "<id>", strconv.Itoa(c.ClusterId))
+
+	service := &ClusterServerEcho{}
 	agent, err := cluster.NewClusteredServiceAgent(ctx, opts, service)
 	if err != nil {
 		panic(err)

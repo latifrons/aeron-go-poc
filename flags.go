@@ -19,6 +19,8 @@ type Config struct {
 	Timeout         int
 	AeronDir        string
 	Idle            string
+	ClusterDir      string
+	ClusterId       int
 }
 
 func mustAtoI(s string) int64 {

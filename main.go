@@ -52,6 +52,8 @@ func main() {
 		Timeout:         viper.GetInt("timeout"),
 		AeronDir:        viper.GetString("dir"),
 		Idle:            viper.GetString("idle"),
+		ClusterId:       viper.GetInt("cluster_id"),
+		ClusterDir:      viper.GetString("cluster_dir"),
 	}
 	cmd := viper.GetString("command")
 
