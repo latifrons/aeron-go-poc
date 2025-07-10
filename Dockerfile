@@ -32,7 +32,7 @@ RUN wget -O aeron-all.jar https://repo1.maven.org/maven2/io/aeron/aeron-all/1.48
 
 # Copy Go source code
 COPY --from=builder /src/main .
-COPY low-latency.properties /app/md.properties
+COPY properties/* /app/*
 
 
 # Run Supervisor

@@ -61,22 +61,21 @@ func (ctx *TestContext) sendKeepAliveIfNecessary() {
 	}
 }
 
-func clusterClientBenchmark(*Config) {
-	ctx := aeron.NewContext().AeronDir("D:\\ws\\latifrons\\aeron-java-poc\\aeron-md-client")
+func clusterClientBenchmark(c *Config) {
+	ctx := aeron.NewContext().AeronDir(c.AeronDir)
 
 	opts := client.NewOptions()
 	//if idleStr := os.Getenv("NO_OP_IDLE"); idleStr != "" {
 	opts.IdleStrategy = &idlestrategy.Busy{}
 	//}
 
-	basePort := 10000
+	// 10002,10102,10202
+	opts.IngressChannel = c.IngressChannel
+	opts.IngressEndpoints = c.IngressEndpoints
+	opts.IngressStreamId = int32(c.IngressStreamId)
 
-	opts.IngressChannel = "aeron:udp?alias=cluster-client-ingress"
-	opts.IngressEndpoints = fmt.Sprintf("0=localhost:%d,1=localhost:%d,2=localhost:%d",
-		basePort+0*100+2,
-		basePort+1*100+2,
-		basePort+2*100+2)
-	//opts.EgressChannel = "aeron:udp?alias=cluster-egress|endpoint=localhost:11111"
+	opts.EgressChannel = c.EgressChannel
+	opts.EgressStreamId = int32(c.EgressStreamId)
 
 	listener := &TestContext{
 		latencies: make([]int64, 1000),

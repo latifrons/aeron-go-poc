@@ -123,17 +123,18 @@ func (s *ClusterServerEcho) OnNewLeadershipTermEvent(
 }
 
 func clusterServerEcho(c *Config) {
+
 	aeronDir := strings.ReplaceAll(c.AeronDir, "<id>", strconv.Itoa(c.ClusterId))
 	ctx := aeron.NewContext().AeronDir(aeronDir)
 
-	opts := cluster.NewOptions()
+	clusterOpts := cluster.NewOptions()
 	//if idleStr := os.Getenv("NO_OP_IDLE"); idleStr != "" {
 
-	opts.IdleStrategy = ToIdleStrategy(c.Idle)
-	opts.ClusterDir = strings.ReplaceAll(c.ClusterDir, "<id>", strconv.Itoa(c.ClusterId))
+	clusterOpts.IdleStrategy = ToIdleStrategy(c.Idle)
+	clusterOpts.ClusterDir = strings.ReplaceAll(c.ClusterDir, "<id>", strconv.Itoa(c.ClusterId))
 
 	service := &ClusterServerEcho{}
-	agent, err := cluster.NewClusteredServiceAgent(ctx, opts, service)
+	agent, err := cluster.NewClusteredServiceAgent(ctx, clusterOpts, service)
 	if err != nil {
 		panic(err)
 	}
