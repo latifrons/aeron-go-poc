@@ -134,7 +134,7 @@ func main() {
 		return
 	case "clusterServerEcho":
 		clusterServerEcho(&ClusterServerConfig{
-			AeronDir:   FromEnvOrDefaultString("aeron.dir", ""),
+			AeronDir:   FromEnvOrDefaultString("aeron.cluster.aeronDir", ""),
 			ClusterDir: MustEnv("aeron.cluster.clusterDir"),
 			Idle:       FromEnvOrDefaultString("aeron.idle", ""),
 		})
