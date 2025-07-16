@@ -19,7 +19,6 @@ package main
 import "C"
 import (
 	"github.com/lirm/aeron-go/aeron/logging"
-	"github.com/spf13/viper"
 )
 
 var logger = logging.MustGetLogger("basic_subscriber")
@@ -83,12 +82,12 @@ var logger = logging.MustGetLogger("basic_subscriber")
 //	}
 
 func main() {
-	viper.SetEnvPrefix("INJ")
-	viper.AutomaticEnv()
+	//viper.SetEnvPrefix("INJ")
+	//viper.AutomaticEnv()
 
 	logger.SetLevel(logging.DEBUG)
 
-	cmd := viper.GetString("command")
+	cmd := MustEnv("command")
 	//profile := viper.GetString("profile")
 	//clusterId := viper.GetInt("cluster_id")
 

@@ -1,6 +1,6 @@
 variable "image" {
   type    = string
-  default = "654654541151.dkr.ecr.ap-east-1.amazonaws.com/exchange-api:v1.14.1"
+  default = "cluster_server:v1"
 }
 
 job "cluster-server-0" {
