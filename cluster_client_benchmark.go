@@ -12,26 +12,26 @@ import (
 	"github.com/lirm/aeron-go/cluster/client"
 )
 
-type TestContext struct {
+type ClusterBenchmarkClient struct {
 	ac                    *client.AeronCluster
 	messageCount          int
 	latencies             []int64
 	nextSendKeepAliveTime int64
 }
 
-func (ctx *TestContext) OnConnect(ac *client.AeronCluster) {
+func (ctx *ClusterBenchmarkClient) OnConnect(ac *client.AeronCluster) {
 	fmt.Printf("OnConnect - sessionId=%d leaderMemberId=%d leadershipTermId=%d\n",
 		ac.ClusterSessionId(), ac.LeaderMemberId(), ac.LeadershipTermId())
 	ctx.ac = ac
 	ctx.nextSendKeepAliveTime = time.Now().UnixMilli() + time.Second.Milliseconds()
 }
 
-func (ctx *TestContext) OnDisconnect(cluster *client.AeronCluster, details string) {
+func (ctx *ClusterBenchmarkClient) OnDisconnect(cluster *client.AeronCluster, details string) {
 	fmt.Printf("OnDisconnect - sessionId=%d (%s)\n", cluster.ClusterSessionId(), details)
 	ctx.ac = nil
 }
 
-func (ctx *TestContext) OnMessage(cluster *client.AeronCluster, timestamp int64,
+func (ctx *ClusterBenchmarkClient) OnMessage(cluster *client.AeronCluster, timestamp int64,
 	buffer *atomic.Buffer, offset int32, length int32, header *logbuffer.Header) {
 	recvTime := time.Now().UnixNano()
 	msgNo := buffer.GetInt32(offset)
@@ -46,22 +46,22 @@ func (ctx *TestContext) OnMessage(cluster *client.AeronCluster, timestamp int64,
 	}
 }
 
-func (ctx *TestContext) OnNewLeader(cluster *client.AeronCluster, leadershipTermId int64, leaderMemberId int32) {
+func (ctx *ClusterBenchmarkClient) OnNewLeader(cluster *client.AeronCluster, leadershipTermId int64, leaderMemberId int32) {
 	fmt.Printf("OnNewLeader - sessionId=%d leaderMemberId=%d leadershipTermId=%d\n",
 		cluster.ClusterSessionId(), leaderMemberId, leadershipTermId)
 }
 
-func (ctx *TestContext) OnError(cluster *client.AeronCluster, details string) {
+func (ctx *ClusterBenchmarkClient) OnError(cluster *client.AeronCluster, details string) {
 	fmt.Printf("OnError - sessionId=%d: %s\n", cluster.ClusterSessionId(), details)
 }
 
-func (ctx *TestContext) sendKeepAliveIfNecessary() {
+func (ctx *ClusterBenchmarkClient) sendKeepAliveIfNecessary() {
 	if now := time.Now().UnixMilli(); now > ctx.nextSendKeepAliveTime && ctx.ac != nil && ctx.ac.SendKeepAlive() {
 		ctx.nextSendKeepAliveTime += time.Second.Milliseconds()
 	}
 }
 
-func clusterClientBenchmark(c *Config) {
+func clusterBenchmarkClient(c *ClusterClientConfig) {
 	ctx := aeron.NewContext().AeronDir(c.AeronDir)
 
 	opts := client.NewOptions()
@@ -75,9 +75,9 @@ func clusterClientBenchmark(c *Config) {
 	opts.IngressStreamId = int32(c.IngressStreamId)
 
 	opts.EgressChannel = c.EgressChannel
-	opts.EgressStreamId = int32(c.EgressStreamId)
+	opts.EgressStreamId = c.EgressStreamId
 
-	listener := &TestContext{
+	listener := &ClusterBenchmarkClient{
 		latencies: make([]int64, 1000),
 	}
 	clusterClient, err := client.NewAeronCluster(ctx, opts, listener)
@@ -87,9 +87,11 @@ func clusterClientBenchmark(c *Config) {
 
 	for !clusterClient.IsConnected() {
 		opts.IdleStrategy.Idle(clusterClient.Poll())
+		fmt.Printf("waiting to connect...\n")
+		time.Sleep(time.Second)
 	}
 
-	sendBuf := atomic.MakeBuffer(make([]byte, 100))
+	sendBuf := atomic.MakeBuffer(make([]byte, 64))
 	for round := 1; round <= 10; round++ {
 		fmt.Printf("starting round #%d\n", round)
 		listener.messageCount = 0
@@ -123,8 +125,8 @@ func clusterClientBenchmark(c *Config) {
 		totalNs := now.UnixNano() - beginTime
 		sort.Slice(latencies, func(i, j int) bool { return latencies[i] < latencies[j] })
 		fmt.Printf("round #%d complete, count=%d min=%d 10%%=%d 50%%=%d 90%%=%d max=%d throughput=%.2f\n",
-			round, sentCt, latencies[ct-sentCt]/1000, latencies[ct/10]/1000, latencies[ct/2]/1000, latencies[9*(ct/10)]/1000,
-			latencies[ct-1]/1000, (float64(sentCt) * 1000000000.0 / float64(totalNs)))
+			round, sentCt, latencies[ct-sentCt], latencies[ct/10], latencies[ct/2], latencies[9*(ct/10)],
+			latencies[ct-1], (float64(sentCt) * 1000000000.0 / float64(totalNs)))
 
 		for time.Since(now) < 10*time.Second {
 			listener.sendKeepAliveIfNecessary()

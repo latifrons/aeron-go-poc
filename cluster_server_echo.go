@@ -12,6 +12,9 @@ import (
 	"github.com/lirm/aeron-go/cluster/codecs"
 )
 
+type ClusterServerEchoConfig struct {
+}
+
 type ClusterServerEcho struct {
 	cluster cluster.Cluster
 
@@ -57,26 +60,17 @@ func (s *ClusterServerEcho) OnSessionMessage(
 ) {
 	s.messageCount++
 	// Read the incoming timestamp from the message
-	clientTimestamp := string(buffer.GetBytesArray(offset, length))
+	id := buffer.GetInt32(0)
+	tsNano := buffer.GetInt64(8)
 
-	srcBuffer := atomic.MakeBuffer(([]byte)(clientTimestamp))
+	sendBuf := atomic.MakeBuffer(make([]byte, 64))
 
-	session.Offer(srcBuffer, 0, length, nil)
-	fmt.Printf("OnSessionMessage - sessionId=%d time=%d pos=%d len=%d messageCount=%d clientTimestamp=%s\n",
-		session.Id(), timestamp, header.Position(), length, s.messageCount, clientTimestamp)
+	sendBuf.PutInt32(0, id)     // Copy the id to the response
+	sendBuf.PutInt64(8, tsNano) // Copy the timestamp to the response
 
-	//
-	//for offerCnt := 1; ; offerCnt++ {
-	//	result := session.Offer(buffer, offset, length, nil)
-	//	if result >= 0 {
-	//		return
-	//	} else if result == aeron.BackPressured || result == aeron.AdminAction {
-	//		s.cluster.IdleStrategy().Idle(0)
-	//	} else {
-	//		fmt.Printf("WARNING: OnSessionMessage offer failed - sessionId=%d time=%d pos=%d len=%d offerCnt=%d result=%v\n",
-	//			session.Id(), timestamp, header.Position(), length, offerCnt, result)
-	//	}
-	//}
+	session.Offer(sendBuf, 0, length, nil)
+	fmt.Printf("OnSessionMessage - sessionId=%d time=%d pos=%d len=%d messageCount=%d clientTimestamp=%d\n",
+		session.Id(), timestamp, header.Position(), length, s.messageCount, tsNano)
 }
 
 func (s *ClusterServerEcho) OnTimerEvent(correlationId, timestamp int64) {
@@ -122,7 +116,7 @@ func (s *ClusterServerEcho) OnNewLeadershipTermEvent(
 		leadershipTermId, logPosition, timestamp, termBaseLogPosition, leaderMemberId, logSessionId, timeUnit, appVersion)
 }
 
-func clusterServerEcho(c *Config) {
+func clusterServerEcho(c *ClusterServerConfig) {
 
 	aeronDir := strings.ReplaceAll(c.AeronDir, "<id>", strconv.Itoa(c.ClusterId))
 	ctx := aeron.NewContext().AeronDir(aeronDir)
