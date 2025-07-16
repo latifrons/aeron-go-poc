@@ -2,9 +2,6 @@ package main
 
 import (
 	"fmt"
-	"strconv"
-	"strings"
-
 	"github.com/lirm/aeron-go/aeron"
 	"github.com/lirm/aeron-go/aeron/atomic"
 	"github.com/lirm/aeron-go/aeron/logbuffer"
@@ -118,14 +115,15 @@ func (s *ClusterServerEcho) OnNewLeadershipTermEvent(
 
 func clusterServerEcho(c *ClusterServerConfig) {
 
-	aeronDir := strings.ReplaceAll(c.AeronDir, "<id>", strconv.Itoa(c.ClusterId))
-	ctx := aeron.NewContext().AeronDir(aeronDir)
+	//aeronDir := strings.ReplaceAll(c.AeronDir, "<id>", strconv.Itoa(c.ClusterId))
+	ctx := aeron.NewContext().AeronDir(c.AeronDir)
 
 	clusterOpts := cluster.NewOptions()
 	//if idleStr := os.Getenv("NO_OP_IDLE"); idleStr != "" {
 
 	clusterOpts.IdleStrategy = ToIdleStrategy(c.Idle)
-	clusterOpts.ClusterDir = strings.ReplaceAll(c.ClusterDir, "<id>", strconv.Itoa(c.ClusterId))
+	//clusterOpts.ClusterDir = strings.ReplaceAll(c.ClusterDir, "<id>", strconv.Itoa(c.ClusterId))
+	clusterOpts.ClusterDir = c.ClusterDir
 
 	service := &ClusterServerEcho{}
 	agent, err := cluster.NewClusteredServiceAgent(ctx, clusterOpts, service)
