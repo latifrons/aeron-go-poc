@@ -2,7 +2,7 @@ package main
 
 import (
 	"github.com/lirm/aeron-go/aeron/idlestrategy"
-	"github.com/spf13/viper"
+	"os"
 	"strconv"
 	"strings"
 	"time"
@@ -31,33 +31,31 @@ type ClusterClientConfig struct {
 }
 
 func FromEnvOrDefaultString(key string, defaultValue string) string {
-	if v := viper.GetString(key); v != "" {
+	if v := os.Getenv(key); v != "" {
 		return v
 	}
 	return defaultValue
 }
 
-func FromEnvOrDefaultInt(key string, defaultValue int) int {
-	if v := viper.GetInt(key); v != 0 {
-		return v
+func FromEnvOrDefaultInt32(key string, defaultValue int32) int32 {
+	if v := os.Getenv(key); v != "" {
+		return int32(mustAtoI(v))
 	}
 	return defaultValue
 }
 
 func MustEnv(key string) string {
-	v := viper.GetString(key)
-	if v == "" {
-		panic("Environment variable " + key + " is not set")
+	if v := os.Getenv(key); v != "" {
+		return v
 	}
-	return v
+	panic("Environment variable " + key + " is not set")
 }
 
 func MustEnvInt32(key string) int32 {
-	v := viper.GetInt(key)
-	if v == 0 {
-		panic("Environment variable " + key + " is not set or is zero")
+	if v := os.Getenv(key); v != "" {
+		return int32(mustAtoI(v))
 	}
-	return int32(v)
+	panic("Environment variable " + key + " is not set")
 }
 
 // backoffp,10,20,1000,1000000
