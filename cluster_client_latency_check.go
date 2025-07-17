@@ -86,6 +86,8 @@ func clusterLatencyCheckClient(c *ClusterClientConfig) {
 	sentCt := 0
 	sendBuf := atomic.MakeBuffer(make([]byte, 64))
 
+	go listen(opts, clusterClient, listener)
+
 	for {
 		sendBuf.PutInt32(0, int32(sentCt))
 		sendBuf.PutInt64(8, time.Now().UnixNano())
@@ -95,12 +97,20 @@ func clusterLatencyCheckClient(c *ClusterClientConfig) {
 				break
 			}
 		}
-		clusterClient.Poll()
-		listener.sendKeepAliveIfNecessary()
-
+		//clusterClient.Poll()
+		//listener.sendKeepAliveIfNecessary()
 		time.Sleep(time.Second)
 	}
 	clusterClient.Close()
 	fmt.Println("done")
 	time.Sleep(time.Second)
+}
+
+func listen(opts *client.Options, client *client.AeronCluster, listener *ClusterLatencyCheckClient) {
+	idleStrategy := opts.IdleStrategy
+	for {
+		fragmentsRead := client.Poll()
+		idleStrategy.Idle(fragmentsRead)
+		listener.sendKeepAliveIfNecessary()
+	}
 }
