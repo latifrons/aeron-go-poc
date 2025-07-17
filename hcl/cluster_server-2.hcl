@@ -1,6 +1,6 @@
 variable "image" {
   type    = string
-  default = "cluster_server:v1.5"
+  default = "cluster_server:v1.6"
 }
 variable "nodeId" {
   type    = number
