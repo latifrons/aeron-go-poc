@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"github.com/lirm/aeron-go/aeron/idlestrategy"
 	"os"
 	"strconv"
@@ -95,4 +96,14 @@ func mustAtoI(s string) int64 {
 		panic(err)
 	}
 	return int64(v)
+}
+
+func IntComma(i int64) string {
+	if i < 0 {
+		return "-" + IntComma(-i)
+	}
+	if i < 1000 {
+		return fmt.Sprintf("%d", i)
+	}
+	return IntComma(i/1000) + "," + fmt.Sprintf("%03d", i%1000)
 }

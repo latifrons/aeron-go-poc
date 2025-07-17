@@ -33,8 +33,8 @@ func (ctx *ClusterLatencyCheckClient) OnMessage(cluster *client.AeronCluster, ti
 	msgNo := buffer.GetInt32(offset)
 	sendTime := buffer.GetInt64(offset + 8)
 	latency := recvTime - sendTime
-	fmt.Printf("OnMessage - sessionId=%d timestamp=%d pos=%d length=%d msgNo=%d latency=%d\n",
-		cluster.ClusterSessionId(), timestamp, header.Position(), length, msgNo, latency)
+	fmt.Printf("OnMessage - sessionId=%d timestamp=%d pos=%d length=%d msgNo=%d latency=%s\n",
+		cluster.ClusterSessionId(), timestamp, header.Position(), length, msgNo, IntComma(latency))
 }
 
 func (ctx *ClusterLatencyCheckClient) OnNewLeader(cluster *client.AeronCluster, leadershipTermId int64, leaderMemberId int32) {

@@ -1,6 +1,6 @@
 variable "image" {
   type    = string
-  default = "cluster_server:v1.2"
+  default = "cluster_server:v1.5"
 }
 variable "nodeId" {
   type    = number
@@ -78,6 +78,7 @@ job "cluster-server-node1" {
       }
 
       env = {
+        "aeron.idle"                    = "busyspin",
         "aeron.cluster.nodeId"          = "${var.nodeId}",
         "aeron.cluster.hostnames"       = "${var.clusterHostNames}",
         "aeron.cluster.clusterDir"      = "/data/cluster-${var.nodeId}",
