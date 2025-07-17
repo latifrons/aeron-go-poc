@@ -90,7 +90,7 @@ func clusterLatencyCheckClient(c *ClusterClientConfig) {
 		sendBuf.PutInt32(0, int32(sentCt))
 		sendBuf.PutInt64(8, time.Now().UnixNano())
 		for {
-			if r := clusterClient.Offer(sendBuf, 0, 64); r >= 0 {
+			if r := clusterClient.Offer(sendBuf, 0, sendBuf.Capacity()); r >= 0 {
 				sentCt++
 				break
 			}

@@ -57,8 +57,8 @@ func (s *ClusterServerEcho) OnSessionMessage(
 ) {
 	s.messageCount++
 	// Read the incoming timestamp from the message
-	id := buffer.GetInt32(0)
-	tsNano := buffer.GetInt64(8)
+	id := buffer.GetInt32(offset + 0)
+	tsNano := buffer.GetInt64(offset + 8)
 
 	sendBuf := atomic.MakeBuffer(make([]byte, 64))
 
