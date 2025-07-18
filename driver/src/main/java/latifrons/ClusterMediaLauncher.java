@@ -28,8 +28,8 @@ public class ClusterMediaLauncher {
     public static void launch() {
         final int nodeId = parseInt(EnvTool.mustGetEnv("aeron.cluster.nodeId"));
         final String hostnamesStr = EnvTool.mustGetEnv("aeron.cluster.hostnames");
-        final String clusterDir = EnvTool.mustGetEnv("aeron.cluster.clusterDir");
-        final String aeronDir = EnvTool.mustGetEnv("aeron.cluster.aeronDir");
+        final String clusterDir = EnvTool.mustGetEnv("aeron.cluster.dir");
+        final String aeronDir = EnvTool.mustGetEnv("aeron.driver.dir");
         final String aeronIdle = EnvTool.getEnv("aeron.driver.idle", "");
         final String lowLatency = EnvTool.getEnv("aeron.driver.lowLatency", "0");
 

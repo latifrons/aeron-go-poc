@@ -78,14 +78,16 @@ job "cluster-server-node1" {
       }
 
       env = {
-        "aeron.idle"                    = "busyspin", # client
-        "aeron.driver.lowLatency"       = "1", # server
+        "command"                       = "clusterServerEcho"
+
+        "aeron.driver.dir"              = "/dev/shm/aeron-md",
+        "aeron.driver.idle"             = "busyspin"
+        "aeron.driver.lowLatency"       = "1",
+
+        "aeron.cluster.dir"             = "/data/cluster-${var.nodeId}",
         "aeron.cluster.nodeId"          = "${var.nodeId}",
         "aeron.cluster.hostnames"       = "${var.clusterHostNames}",
-        "aeron.cluster.clusterDir"      = "/data/cluster-${var.nodeId}",
-        "aeron.cluster.aeronDir"        = "/dev/shm/aeron-md",
         "aeron.cluster.ingressStreamId" = "110",
-        "command"                       = "clusterServerEcho"
       }
       resources {
         cpu        = 100

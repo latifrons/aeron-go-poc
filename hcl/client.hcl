@@ -2,13 +2,13 @@ variable "image" {
   type    = string
   default = "arr:v1.1"
 }
-variable "nodeId" {
-  type    = number
-  default = 0
-}
-variable "clusterHostNames" {
+variable "clusterIngresses" {
   type    = string
-  default = "10.2.3.5,10.2.3.5,10.2.3.5"
+  default = "0=10.2.3.5:9002,1=10.2.3.5:9102,2=10.2.3.5:9202"
+}
+variable "egress" {
+  type    = string
+  default = "10.2.3.5:10000"
 }
 
 job "cluster-server-node0" {
@@ -78,16 +78,15 @@ job "cluster-server-node0" {
       }
 
       env = {
-        "command"                       = "clusterServerEcho"
+        "command"                 = "clusterLatencyCheckClient"
+        "aeron.driver.dir"        = "/dev/shm/aeron-md"
+        "aeron.driver.idle"       = "busyspin"
+        "aeron.driver.lowLatency" = "1",
 
-        "aeron.driver.dir"              = "/dev/shm/aeron-md",
-        "aeron.driver.idle"             = "busyspin"
-        "aeron.driver.lowLatency"       = "1",
-
-        "aeron.cluster.dir"             = "/data/cluster-${var.nodeId}",
-        "aeron.cluster.nodeId"          = "${var.nodeId}",
-        "aeron.cluster.hostnames"       = "${var.clusterHostNames}",
-        "aeron.cluster.ingressStreamId" = "110",
+        "aeron.egressChannel"    = "aeron:udp?endpoint=${var.egress}"
+        "aeron.egressStreamId"   = "111"
+        "aeron.ingressEndpoints" = "${var.clusterIngresses}"
+        "aeron.ingressStreamId"  = "110"
       }
       resources {
         cpu        = 100

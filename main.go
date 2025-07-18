@@ -112,8 +112,8 @@ func main() {
 		return
 	case "clusterLatencyCheckClient":
 		clusterLatencyCheckClient(&ClusterClientConfig{
-			AeronDir:         FromEnvOrDefaultString("aeron.dir", ""),
-			Idle:             FromEnvOrDefaultString("aeron.idle", ""),
+			AeronDir:         FromEnvOrDefaultString("aeron.driver.dir", ""),
+			Idle:             FromEnvOrDefaultString("aeron.driver.idle", ""),
 			IngressChannel:   FromEnvOrDefaultString("aeron.ingressChannel", "aeron:udp"),
 			IngressEndpoints: MustEnv("aeron.ingressEndpoints"),
 			IngressStreamId:  MustEnvInt32("aeron.ingressStreamId"),
@@ -123,8 +123,8 @@ func main() {
 		return
 	case "clusterBenchmarkClient":
 		clusterBenchmarkClient(&ClusterClientConfig{
-			AeronDir:         FromEnvOrDefaultString("aeron.dir", ""),
-			Idle:             FromEnvOrDefaultString("aeron.idle", ""),
+			AeronDir:         FromEnvOrDefaultString("aeron.driver.dir", ""),
+			Idle:             FromEnvOrDefaultString("aeron.driver.idle", ""),
 			IngressChannel:   FromEnvOrDefaultString("aeron.ingressChannel", "aeron:udp"),
 			IngressEndpoints: MustEnv("aeron.ingressEndpoints"),
 			IngressStreamId:  MustEnvInt32("aeron.ingressStreamId"),
@@ -134,9 +134,9 @@ func main() {
 		return
 	case "clusterServerEcho":
 		clusterServerEcho(&ClusterServerConfig{
-			AeronDir:   FromEnvOrDefaultString("aeron.cluster.aeronDir", ""),
-			ClusterDir: MustEnv("aeron.cluster.clusterDir"),
-			Idle:       FromEnvOrDefaultString("aeron.idle", ""),
+			AeronDir:   FromEnvOrDefaultString("aeron.driver.dir", ""),
+			ClusterDir: MustEnv("aeron.cluster.dir"),
+			Idle:       FromEnvOrDefaultString("aeron.driver.idle", ""),
 		})
 		return
 	case "echoServer":
