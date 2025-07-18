@@ -1,20 +1,38 @@
-FROM golang:1.24.2-bookworm AS builder
+# Use official Maven image with OpenJDK
+FROM maven:3.9.10-eclipse-temurin-21 AS builderjava
 
+# Set working directory
+WORKDIR /app/driver
+
+# Copy pom.xml first to leverage Docker layer caching
+COPY driver/pom.xml .
+
+# Download dependencies (this layer will be cached if pom.xml doesn't change)
+RUN mvn dependency:go-offline -B
+
+# Copy source code
+COPY driver/src ./src
+
+# Build the application
+RUN mvn clean package -DskipTests
+
+# Build Golang code
+FROM golang:1.24.2-bookworm AS buildergo
 RUN useradd -m builder
-WORKDIR /src
+WORKDIR /app/go
 
 ADD ./go.mod ./go.sum ./
 RUN go mod download
 
 COPY . .
 
-RUN chown -R builder:builder /src
+RUN chown -R builder:builder /app/go
 USER builder
 
 RUN go build -a -o main .
 
 # Use eclipse-temurin as the base image for Java
-FROM eclipse-temurin:21-jdk
+FROM eclipse-temurin:21-jre-noble
 
 # Install Go, Supervisor, and wget
 RUN apt-get update && apt-get install -y \
@@ -27,13 +45,9 @@ COPY supervisor_configs/solo.conf /etc/supervisor/conf.d/supervisord.conf
 
 WORKDIR /app
 
-# Download Aeron all-in-one JAR
-RUN wget -O aeron-all.jar https://repo1.maven.org/maven2/io/aeron/aeron-all/1.48.2/aeron-all-1.48.2.jar
-
-# Copy Go source code
-COPY --from=builder /src/main .
-COPY properties/* /app/*
-
+COPY --from=builderjava /app/driver/target/aeron-java-launcher-1.0-SNAPSHOT-jar-with-dependencies.jar ./driver.jar
+COPY --from=buildergo /app/go/main ./main
+COPY properties/* /app/
 
 # Run Supervisor
 CMD ["/usr/bin/supervisord", "-c", "/etc/supervisor/conf.d/supervisord.conf"]

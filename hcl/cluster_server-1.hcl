@@ -69,7 +69,7 @@ job "cluster-server-node1" {
 
       config {
         network_mode = "host"
-        shm_size     = "268435456"
+        shm_size     = "536870912"
         sysctl = {
           # "net.ipv4.ip_local_port_range" = "10000 65535"
         }
