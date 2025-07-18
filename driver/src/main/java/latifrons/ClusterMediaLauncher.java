@@ -1,7 +1,10 @@
 package latifrons;
 
 import io.aeron.cluster.ClusteredMediaDriver;
+import io.aeron.driver.ThreadingMode;
 import org.agrona.ErrorHandler;
+import org.agrona.concurrent.BusySpinIdleStrategy;
+import org.agrona.concurrent.NoOpIdleStrategy;
 import org.agrona.concurrent.ShutdownSignalBarrier;
 
 import java.io.File;
@@ -27,7 +30,8 @@ public class ClusterMediaLauncher {
         final String hostnamesStr = EnvTool.mustGetEnv("aeron.cluster.hostnames");
         final String clusterDir = EnvTool.mustGetEnv("aeron.cluster.clusterDir");
         final String aeronDir = EnvTool.mustGetEnv("aeron.cluster.aeronDir");
-        final String aeronIdle = EnvTool.getEnv("aeron.idle", "");
+        final String aeronIdle = EnvTool.getEnv("aeron.driver.idle", "");
+        final String lowLatency = EnvTool.getEnv("aeron.driver.lowLatency", "0");
 
         final int ingressStreamId = parseInt(EnvTool.mustGetEnv("aeron.cluster.ingressStreamId"));
         final List<String> hostnames = Arrays.asList(hostnamesStr.split(","));
@@ -41,11 +45,28 @@ public class ClusterMediaLauncher {
                 null);
 
         clusterConfig.mediaDriverContext().
-                senderIdleStrategy(ClusterConfig.toIdleStrategy(aeronIdle)).
-                receiverIdleStrategy(ClusterConfig.toIdleStrategy(aeronIdle)).
-                conductorIdleStrategy(ClusterConfig.toIdleStrategy(aeronIdle)).
                 aeronDirectoryName(aeronDir).
                 errorHandler(errorHandler("Media Driver"));
+
+        if (lowLatency.equals("1")) {
+            System.out.println("Using low latency settings for Aeron Media Driver.");
+            clusterConfig.mediaDriverContext()
+                    .threadingMode(ThreadingMode.DEDICATED)
+                    .termBufferSparseFile(false)
+                    .socketRcvbufLength(2 * 1024 * 1024)
+                    .socketSndbufLength(2 * 1024 * 1024)
+                    .initialWindowLength(2 * 1024 * 1024)
+                    .conductorIdleStrategy(new BusySpinIdleStrategy())
+                    .senderIdleStrategy(new NoOpIdleStrategy())
+                    .receiverIdleStrategy(new NoOpIdleStrategy());
+        } else {
+            System.out.println("Using default settings for Aeron Media Driver.");
+            clusterConfig.mediaDriverContext().
+                    senderIdleStrategy(ClusterConfig.toIdleStrategy(aeronIdle)).
+                    receiverIdleStrategy(ClusterConfig.toIdleStrategy(aeronIdle)).
+                    conductorIdleStrategy(ClusterConfig.toIdleStrategy(aeronIdle));
+        }
+
         clusterConfig.archiveContext()
                 .archiveDir(new File(clusterDir, "archive"))
                 .errorHandler(errorHandler("Archive"));

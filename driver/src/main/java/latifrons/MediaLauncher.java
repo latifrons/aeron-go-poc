@@ -22,8 +22,8 @@ public class MediaLauncher {
 
     public static void launch() {
         final String aeronDir = EnvTool.mustGetEnv("aeron.aeronDir");
-        final String aeronIdle = EnvTool.getEnv("aeron.idle", "");
-        final String lowLatency = EnvTool.getEnv("lowLatency", "0");
+        final String aeronIdle = EnvTool.getEnv("aeron.driver.idle", "");
+        final String lowLatency = EnvTool.getEnv("aeron.driver.lowLatency", "0");
 
         MediaDriver.Context mediaDriverCtx = new MediaDriver.Context()
                 .aeronDirectoryName(aeronDir)
